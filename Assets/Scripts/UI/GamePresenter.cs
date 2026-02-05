@@ -43,11 +43,12 @@ namespace TicTacToe.UI
         private AIGameController gameController;
         private Coroutine resetCoroutine;
         private Coroutine aiMoveCoroutine;
+        private bool isInitialized;
 
         private void Awake()
         {
             ValidateReferences();
-            InitializeGame();
+            // Don't auto-initialize - wait for StartPageController to call InitializeWithSettings
         }
 
         private void OnDestroy()
@@ -231,6 +232,12 @@ namespace TicTacToe.UI
 
         public void OnResetButtonClicked()
         {
+            if (!isInitialized)
+            {
+                Debug.LogWarning("[GamePresenter] Cannot reset - game not initialized yet!");
+                return;
+            }
+
             if (resetCoroutine != null)
             {
                 StopCoroutine(resetCoroutine);
@@ -244,6 +251,19 @@ namespace TicTacToe.UI
             }
 
             gameController?.ResetBoard();
+        }
+
+        /// <summary>
+        /// Initializes the game with specified mode and difficulty.
+        /// Call this from StartPageController when starting a new game.
+        /// </summary>
+        public void InitializeWithSettings(GameMode mode, AIDifficulty difficulty)
+        {
+            UnsubscribeFromGameEvents();
+            gameMode = mode;
+            aiDifficulty = difficulty;
+            InitializeGame();
+            isInitialized = true;
         }
 
         public void SetGameMode(GameMode mode)
