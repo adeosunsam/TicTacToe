@@ -20,7 +20,7 @@ namespace TicTacToe.UI
         private TextMeshProUGUI statusText;
         
         [SerializeField]
-        private TextMeshProUGUI scoreText;
+        private TextMeshProUGUI hostScoreText, visitorScoreText;
 
         [Header("Strike Lines")]
         [SerializeField]
@@ -106,12 +106,16 @@ namespace TicTacToe.UI
             }
         }
 
-        public void UpdateScoreText(string text)
+        public void UpdateScoreText(int xScore, int oScore)
         {
-            if (scoreText != null)
+            if(hostScoreText != null)
             {
-                scoreText.text = text;
+                hostScoreText.text = $"{xScore}";
             }
+            if(visitorScoreText != null)
+            {
+				visitorScoreText.text = $"{oScore}";
+			}
         }
 
         private bool IsValidCellIndex(int index)

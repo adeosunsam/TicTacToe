@@ -3,12 +3,26 @@ using TicTacToe.Core;
 
 namespace TicTacToe.Game
 {
+    /// <summary>
+    /// Core game controller that manages game flow and state.
+    /// Can be extended for AI gameplay support.
+    /// </summary>
     public class GameController
     {
-        private readonly IGameBoard _board;
-        private readonly IWinChecker _winChecker;
-        private readonly IScoreManager _scoreManager;
-        private readonly GameState _gameState;
+        #region Protected Fields
+
+        protected readonly IGameBoard _board;
+        protected readonly IWinChecker _winChecker;
+        protected readonly IScoreManager _scoreManager;
+        protected readonly GameState _gameState;
+
+        #endregion
+
+        #region Events
+
+        #endregion
+
+        #region Events
 
         public event Action<int, int> OnCellPlayed; // cellIndex, player
         public event Action<int, int> OnWin; // player, winLine
@@ -16,15 +30,23 @@ namespace TicTacToe.Game
         public event Action<int> OnPlayerChanged; // currentPlayer
         public event Action OnBoardReset;
 
+        #endregion
+
+        #region Constructor
+
         public GameController(IGameBoard board, IWinChecker winChecker, IScoreManager scoreManager, GameState gameState)
         {
-            _board = board;
-            _winChecker = winChecker;
-            _scoreManager = scoreManager;
-            _gameState = gameState;
+            _board = board ?? throw new ArgumentNullException(nameof(board));
+            _winChecker = winChecker ?? throw new ArgumentNullException(nameof(winChecker));
+            _scoreManager = scoreManager ?? throw new ArgumentNullException(nameof(scoreManager));
+            _gameState = gameState ?? throw new ArgumentNullException(nameof(gameState));
         }
 
-        public bool TryPlayCell(int cellIndex)
+        #endregion
+
+        #region Public Methods
+
+        public virtual bool TryPlayCell(int cellIndex)
         {
             if (!_gameState.IsActive) return false;
             if (!_board.IsCellEmpty(cellIndex)) return false;
@@ -50,19 +72,6 @@ namespace TicTacToe.Game
             return true;
         }
 
-        private void HandleWin(int player, int winLine)
-        {
-            _gameState.SetWin();
-            _scoreManager.AddScore(player);
-            OnWin?.Invoke(player, winLine);
-        }
-
-        private void HandleDraw()
-        {
-            _gameState.SetDraw();
-            OnDraw?.Invoke();
-        }
-
         public void ResetBoard()
         {
             _board.Clear();
@@ -85,5 +94,29 @@ namespace TicTacToe.Game
         {
             return _gameState.IsActive;
         }
+
+        public IGameBoard GetBoard()
+        {
+            return _board;
+        }
+
+        #endregion
+
+        #region Protected Methods
+
+        protected void HandleWin(int player, int winLine)
+        {
+            _gameState.SetWin();
+            _scoreManager.AddScore(player);
+            OnWin?.Invoke(player, winLine);
+        }
+
+        protected void HandleDraw()
+        {
+            _gameState.SetDraw();
+            OnDraw?.Invoke();
+        }
+
+        #endregion
     }
 }

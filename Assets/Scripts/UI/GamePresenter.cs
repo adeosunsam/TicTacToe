@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using UnityEngine;
 using TicTacToe.Game;
+using TicTacToe.Core;
+using TicTacToe.AI;
 
 namespace TicTacToe.UI
 {
@@ -24,11 +26,23 @@ namespace TicTacToe.UI
         [Range(0.5f, 10f)]
         private float resetDelay = 2f;
 
+        [SerializeField]
+        [Range(0.1f, 3f)]
+        private float aiMoveDelay = 0.5f;
+
+        [Header("Game Mode")]
+        [SerializeField]
+        private Core.GameMode gameMode = Core.GameMode.PlayerVsPlayer;
+
+        [SerializeField]
+        private AI.AIDifficulty aiDifficulty = AI.AIDifficulty.Hard;
+
         private const int PLAYER_X = 1;
         private const int PLAYER_O = 2;
 
-        private GameController gameController;
+        private AIGameController gameController;
         private Coroutine resetCoroutine;
+        private Coroutine aiMoveCoroutine;
 
         private void Awake()
         {
@@ -71,7 +85,22 @@ namespace TicTacToe.UI
             var scoreManager = new Core.ScoreManager(new[] { PLAYER_X, PLAYER_O });
             var gameState = new Core.GameState(new[] { PLAYER_X, PLAYER_O });
 
-            gameController = new GameController(board, winChecker, scoreManager, gameState);
+            // Create AI player if in bot mode
+            AI.IAIPlayer aiPlayer = null;
+            if (gameMode == Core.GameMode.PlayerVsBot)
+            {
+                aiPlayer = new AI.MinimaxAI(winChecker, aiDifficulty);
+            }
+
+            gameController = new AIGameController(
+                board,
+                winChecker,
+                scoreManager,
+                gameState,
+                gameMode,
+                aiPlayer,
+                PLAYER_X,
+                PLAYER_O);
 
             SubscribeToGameEvents();
             gameView.Initialize(OnCellClicked);
@@ -89,6 +118,8 @@ namespace TicTacToe.UI
             gameController.OnDraw += HandleDraw;
             gameController.OnPlayerChanged += HandlePlayerChanged;
             gameController.OnBoardReset += HandleBoardReset;
+            gameController.OnAIThinking += HandleAIThinking;
+            gameController.OnAIMoveCompleted += HandleAIMoveCompleted;
         }
 
         private void UnsubscribeFromGameEvents()
@@ -100,6 +131,8 @@ namespace TicTacToe.UI
             gameController.OnDraw -= HandleDraw;
             gameController.OnPlayerChanged -= HandlePlayerChanged;
             gameController.OnBoardReset -= HandleBoardReset;
+            gameController.OnAIThinking -= HandleAIThinking;
+            gameController.OnAIMoveCompleted -= HandleAIMoveCompleted;
         }
 
         private void OnCellClicked(int cellIndex)
@@ -139,6 +172,23 @@ namespace TicTacToe.UI
             gameView.ClearAllCells();
             gameView.HideStrikeLine();
             UpdateStatusForCurrentPlayer();
+
+            // Check if AI should start (if it's AI's turn after reset)
+            if (gameController.IsAITurn())
+            {
+                aiMoveCoroutine = StartCoroutine(ExecuteAIMoveWithDelay());
+            }
+        }
+
+        private void HandleAIThinking()
+        {
+            // AI is thinking, trigger move after delay
+            aiMoveCoroutine = StartCoroutine(ExecuteAIMoveWithDelay());
+        }
+
+        private void HandleAIMoveCompleted(int cellIndex)
+        {
+            // AI move completed, UI already updated through OnCellPlayed event
         }
 
 
@@ -157,7 +207,7 @@ namespace TicTacToe.UI
 
             int xScore = gameController.GetScore(PLAYER_X);
             int oScore = gameController.GetScore(PLAYER_O);
-            gameView.UpdateScoreText($"X: {xScore}  |  O: {oScore}");
+            gameView.UpdateScoreText(xScore, oScore);
         }
 
         private string GetPlayerName(int player)
@@ -172,6 +222,13 @@ namespace TicTacToe.UI
             gameController?.ResetBoard();
         }
 
+        private IEnumerator ExecuteAIMoveWithDelay()
+        {
+            yield return new WaitForSeconds(aiMoveDelay);
+            aiMoveCoroutine = null;
+            gameController?.ExecuteAIMove();
+        }
+
         public void OnResetButtonClicked()
         {
             if (resetCoroutine != null)
@@ -180,7 +237,30 @@ namespace TicTacToe.UI
                 resetCoroutine = null;
             }
 
+            if (aiMoveCoroutine != null)
+            {
+                StopCoroutine(aiMoveCoroutine);
+                aiMoveCoroutine = null;
+            }
+
             gameController?.ResetBoard();
+        }
+
+        public void SetGameMode(GameMode mode)
+        {
+            UnsubscribeFromGameEvents();
+            gameMode = mode;
+            InitializeGame();
+        }
+
+        public void SetAIDifficulty(AIDifficulty difficulty)
+        {
+            aiDifficulty = difficulty;
+            if (gameMode == GameMode.PlayerVsBot)
+            {
+                // Reinitialize to apply new difficulty
+                SetGameMode(gameMode);
+            }
         }
     }
 }

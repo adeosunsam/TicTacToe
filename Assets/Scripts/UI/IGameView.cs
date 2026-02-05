@@ -10,6 +10,6 @@ namespace TicTacToe.UI
         void ShowStrikeLine(int winLine);
         void HideStrikeLine();
         void UpdateStatusText(string text);
-        void UpdateScoreText(string text);
+        void UpdateScoreText(int xScore, int oScore);
     }
 }
