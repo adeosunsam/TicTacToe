@@ -27,16 +27,37 @@ namespace TicTacToe.UI
 
         [Header("Difficulty Selection (for Bot mode)")]
         [SerializeField]
+        [Tooltip("Panel containing difficulty selection (shown when hovering/selecting bot mode)")]
         private GameObject _difficultyPanel;
 
         [SerializeField]
+        [Tooltip("Slider for difficulty selection (0=Easy, 1=Medium, 2=Hard)")]
         private Slider _difficultySlider;
 
         [SerializeField]
+        [Tooltip("Text showing selected difficulty")]
         private TextMeshProUGUI _difficultyText;
 
-        [Header("Game Reference")]
+        [Header("Difficulty Colors")]
         [SerializeField]
+        [Tooltip("Color for Easy difficulty")]
+        private Color _easyColor = Color.green;
+
+        [SerializeField]
+        [Tooltip("Color for Medium difficulty")]
+        private Color _mediumColor = Color.yellow;
+
+        [SerializeField]
+        [Tooltip("Color for Hard difficulty")]
+        private Color _hardColor = new Color(1f, 0.37f, 0.34f); // #FF5F57
+
+        [SerializeField]
+		[Range(0f, 20f)]
+		private float darkenFactor = 10f;
+
+		[Header("Game Reference")]
+        [SerializeField]
+        [Tooltip("Reference to the GamePresenter")]
         private GamePresenter _gamePresenter;
 
         #endregion
@@ -152,6 +173,63 @@ namespace TicTacToe.UI
                     _ => "EASY"
                 };
                 _difficultyText.text = difficultyName;
+            }
+
+            // Update colors based on difficulty
+            UpdateDifficultyColors();
+        }
+
+        private void UpdateDifficultyColors()
+        {
+            Color selectedColor = _selectedDifficulty switch
+            {
+                AI.AIDifficulty.Easy => _easyColor,
+                AI.AIDifficulty.Medium => _mediumColor,
+                AI.AIDifficulty.Hard => _hardColor,
+                _ => _easyColor
+            };
+
+            if (_playVsBotButton != null)
+            {
+                var image = _playVsBotButton.GetComponent<Image>();
+
+                if (image)
+                {
+                    image.color = selectedColor;
+                }
+            }
+
+            // Update slider fill color
+            if (_difficultySlider != null)
+            {
+                var fillRect = _difficultySlider.fillRect;
+                if (fillRect != null)
+                {
+                    var fillImage = fillRect.GetComponent<Image>();
+                    if (fillImage != null)
+                    {
+                        fillImage.color = selectedColor;
+                    }
+                }
+
+                // Update handle color
+                var handleRect = _difficultySlider.handleRect;
+                if (handleRect != null)
+                {
+                    var handleImage = handleRect.GetComponentInChildren<Image>();
+                    if (handleImage != null)
+                    {
+						Color darkened = selectedColor * darkenFactor;
+						darkened.a = selectedColor.a;
+						handleImage.color = darkened;
+                    }
+                }
+            }
+
+            // Update difficulty text color
+            if (_difficultyText != null)
+            {
+                _difficultyText.color = selectedColor;
             }
         }
 
