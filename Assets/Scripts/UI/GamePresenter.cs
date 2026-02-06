@@ -32,10 +32,10 @@ namespace TicTacToe.UI
 
         [Header("Game Mode")]
         [SerializeField]
-        private Core.GameMode gameMode = Core.GameMode.PlayerVsPlayer;
+        private GameMode gameMode = GameMode.PlayerVsPlayer;
 
         [SerializeField]
-        private AI.AIDifficulty aiDifficulty = AI.AIDifficulty.Hard;
+        private AIDifficulty aiDifficulty = AIDifficulty.Hard;
 
         private const int PLAYER_X = 1;
         private const int PLAYER_O = 2;
@@ -57,10 +57,10 @@ namespace TicTacToe.UI
 
         private void InitializeGame()
         {
-            var board = new Core.GameBoard();
-            var winChecker = new Core.WinChecker();
-            var scoreManager = new Core.ScoreManager(new[] { PLAYER_X, PLAYER_O });
-            var gameState = new Core.GameState(new[] { PLAYER_X, PLAYER_O });
+            var board = new GameBoard();
+            var winChecker = new WinChecker();
+            var scoreManager = new ScoreManager(new[] { PLAYER_X, PLAYER_O });
+            var gameState = new GameState(new[] { PLAYER_X, PLAYER_O });
 
             // Create AI player if in bot mode
             AI.IAIPlayer aiPlayer = null;
@@ -125,9 +125,31 @@ namespace TicTacToe.UI
 
         private void HandleWin(int player, int winLine)
         {
-            string playerName = GetPlayerName(player);
-            gameView.UpdateStatusText($"Player {playerName} Wins!");
-            gameView.ShowStrikeLine(winLine);
+			bool isXTurn = player == PLAYER_X;
+
+			if (gameMode == GameMode.PlayerVsBot)
+			{
+                if (isXTurn)
+                {
+                    gameView.UpdateStatusText("You win");
+                }
+                else
+                {
+                    gameView.UpdateStatusText("Bot wins");
+                }
+			}
+            else if(gameMode == GameMode.PlayerVsPlayer)
+            {
+				if (isXTurn)
+				{
+					gameView.UpdateStatusText("Player 1 wins");
+				}
+				else
+				{
+					gameView.UpdateStatusText("Player 2 wins");
+				}
+			}
+                gameView.ShowStrikeLine(winLine);
             UpdateScores();
             
             resetCoroutine = StartCoroutine(ResetAfterDelay());
@@ -150,7 +172,6 @@ namespace TicTacToe.UI
             gameView.HideStrikeLine();
             UpdateStatusForCurrentPlayer();
 
-            // Check if AI should start (if it's AI's turn after reset)
             if (gameController.IsAITurn())
             {
                 aiMoveCoroutine = StartCoroutine(ExecuteAIMoveWithDelay());
@@ -174,8 +195,27 @@ namespace TicTacToe.UI
             if (gameController == null) return;
 
             int player = gameController.GetCurrentPlayer();
-            string playerName = GetPlayerName(player);
-            gameView.UpdateStatusText($"Player {playerName}'s Turn");
+            
+            bool isXTurn = player == PLAYER_X;
+
+			if (gameMode == GameMode.PlayerVsBot)
+			{
+				if (isXTurn)
+				{
+					gameView.UpdateStatusText("Your turn");
+                    return;
+				}
+				gameView.UpdateStatusText("Bot thinking");
+			}
+            else if(gameMode == GameMode.PlayerVsPlayer)
+            {
+				if (isXTurn)
+				{
+					gameView.UpdateStatusText("Player 1 turn");
+					return;
+				}
+				gameView.UpdateStatusText("Player 2 turn");
+			}
         }
 
         private void UpdateScores()
@@ -185,11 +225,6 @@ namespace TicTacToe.UI
             int xScore = gameController.GetScore(PLAYER_X);
             int oScore = gameController.GetScore(PLAYER_O);
             gameView.UpdateScoreText(xScore, oScore);
-        }
-
-        private string GetPlayerName(int player)
-        {
-            return player == PLAYER_X ? "X" : "O";
         }
 
         private IEnumerator ResetAfterDelay()

@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Linq;
 
 namespace TicTacToe.UI
 {
@@ -53,7 +54,7 @@ namespace TicTacToe.UI
 
         [SerializeField]
 		[Range(0f, 20f)]
-		private float darkenFactor = 10f;
+		private float darkenFactor = 0.5f;
 
 		[Header("Game Reference")]
         [SerializeField]
@@ -189,40 +190,49 @@ namespace TicTacToe.UI
                 _ => _easyColor
             };
 
+            // Update Play vs Bot button color
             if (_playVsBotButton != null)
             {
                 var image = _playVsBotButton.GetComponent<Image>();
-
-                if (image)
+                if (image != null)
                 {
                     image.color = selectedColor;
                 }
             }
 
-            // Update slider fill color
+            // Update slider colors
             if (_difficultySlider != null)
             {
+                // Disable slider transition to prevent color override
+                _difficultySlider.transition = Selectable.Transition.None;
+
+                // Update fill color
                 var fillRect = _difficultySlider.fillRect;
                 if (fillRect != null)
                 {
-                    var fillImage = fillRect.GetComponent<Image>();
-                    if (fillImage != null)
+                    if (fillRect.TryGetComponent<Image>(out var fillImage))
                     {
                         fillImage.color = selectedColor;
                     }
                 }
 
-                // Update handle color
                 var handleRect = _difficultySlider.handleRect;
                 if (handleRect != null)
                 {
-                    var handleImage = handleRect.GetComponentInChildren<Image>();
-                    if (handleImage != null)
+					var handleImage = handleRect.GetComponentsInChildren<Image>().Last();
+
+					if (handleImage != null)
                     {
-                        Debug.Log("Handle image is present");
-						Color darkened = selectedColor * darkenFactor;
-						darkened.a = selectedColor.a;
-						handleImage.color = darkened;
+						//Color darkened = selectedColor * darkenFactor;
+      //                  Debug.Log($"Selected Color: {selectedColor}");
+      //                  Debug.Log($"Darkened Color: {darkened}");
+						//darkened.a = selectedColor.a;
+						//handleImage.color = darkened;
+						handleImage.color = selectedColor;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[StartPageController] No Image found on slider handle!");
                     }
                 }
             }
@@ -244,6 +254,7 @@ namespace TicTacToe.UI
             {
                 return;
             }
+
 
             // Initialize game with selected settings
             _gamePresenter.InitializeWithSettings(mode, difficulty);
