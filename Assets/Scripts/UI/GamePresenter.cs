@@ -45,12 +45,6 @@ namespace TicTacToe.UI
         private Coroutine aiMoveCoroutine;
         private bool isInitialized;
 
-        private void Awake()
-        {
-            ValidateReferences();
-            // Don't auto-initialize - wait for StartPageController to call InitializeWithSettings
-        }
-
         private void OnDestroy()
         {
             UnsubscribeFromGameEvents();
@@ -58,24 +52,6 @@ namespace TicTacToe.UI
             if (resetCoroutine != null)
             {
                 StopCoroutine(resetCoroutine);
-            }
-        }
-
-        private void ValidateReferences()
-        {
-            if (gameView == null)
-            {
-                Debug.LogError("[GamePresenter] GameView reference is missing!", this);
-            }
-
-            if (xSprite == null)
-            {
-                Debug.LogWarning("[GamePresenter] X Sprite is not assigned!", this);
-            }
-
-            if (oSprite == null)
-            {
-                Debug.LogWarning("[GamePresenter] O Sprite is not assigned!", this);
             }
         }
 

@@ -32,7 +32,6 @@ namespace TicTacToe.UI
         {
             if (cells == null || cells.Length == 0)
             {
-                Debug.LogError("[GameView] Cannot initialize - cells array is null or empty!", this);
                 return;
             }
 

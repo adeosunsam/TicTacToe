@@ -84,19 +84,10 @@ namespace TicTacToe.UI
                 _button.onClick.RemoveAllListeners();
                 _button.onClick.AddListener(OnClick);
             }
-            else
-            {
-                Debug.LogError("[TicTacToeCell] Button component not found!", this);
-            }
 
             if (symbolImage == null)
             {
                 symbolImage = transform.Find(SYMBOL_CHILD_NAME)?.GetComponent<Image>();
-                
-                if (symbolImage == null)
-                {
-                    Debug.LogWarning($"[TicTacToeCell] Symbol Image not found. Looking for child named '{SYMBOL_CHILD_NAME}'", this);
-                }
             }
 
             Clear();

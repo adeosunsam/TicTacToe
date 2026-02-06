@@ -52,7 +52,6 @@ namespace TicTacToe.UI
 
         private void Awake()
         {
-            ValidateReferences();
             SetupListeners();
             InitializeUI();
         }
@@ -65,24 +64,6 @@ namespace TicTacToe.UI
         #endregion
 
         #region Initialization
-
-        private void ValidateReferences()
-        {
-            if (gamePresenter == null)
-            {
-                Debug.LogError("[GameModeSelector] GamePresenter reference is missing!", this);
-            }
-
-            if (pvpButton == null)
-            {
-                Debug.LogWarning("[GameModeSelector] PvP Button is not assigned!", this);
-            }
-
-            if (pvbButton == null)
-            {
-                Debug.LogWarning("[GameModeSelector] PvB Button is not assigned!", this);
-            }
-        }
 
         private void SetupListeners()
         {

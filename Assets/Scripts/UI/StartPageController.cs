@@ -51,7 +51,6 @@ namespace TicTacToe.UI
 
         private void Awake()
         {
-            ValidateReferences();
             SetupButtons();
             SetupSlider();
             ShowStartPage();
@@ -66,24 +65,6 @@ namespace TicTacToe.UI
         #endregion
 
         #region Initialization
-
-        private void ValidateReferences()
-        {
-            if (_gamePresenter == null)
-            {
-                Debug.LogError("[StartPageController] GamePresenter reference is missing!", this);
-            }
-
-            if (_startPagePanel == null)
-            {
-                Debug.LogWarning("[StartPageController] Start Page Panel is not assigned!", this);
-            }
-
-            if (_gamePanel == null)
-            {
-                Debug.LogWarning("[StartPageController] Game Panel is not assigned!", this);
-            }
-        }
 
         private void SetupButtons()
         {
@@ -182,7 +163,6 @@ namespace TicTacToe.UI
         {
             if (_gamePresenter == null)
             {
-                Debug.LogError("[StartPageController] Cannot start game - GamePresenter is null!", this);
                 return;
             }
 

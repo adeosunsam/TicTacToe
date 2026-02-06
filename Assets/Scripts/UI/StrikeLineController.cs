@@ -120,7 +120,6 @@ namespace TicTacToe.UI
             RectTransform rectTransform = line.GetComponent<RectTransform>();
             if (rectTransform == null)
             {
-                Debug.LogError("[StrikeLineController] Line GameObject missing RectTransform component!", this);
                 return;
             }
 
