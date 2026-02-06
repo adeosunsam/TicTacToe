@@ -219,6 +219,7 @@ namespace TicTacToe.UI
                     var handleImage = handleRect.GetComponentInChildren<Image>();
                     if (handleImage != null)
                     {
+                        Debug.Log("Handle image is present");
 						Color darkened = selectedColor * darkenFactor;
 						darkened.a = selectedColor.a;
 						handleImage.color = darkened;
