@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 using System.Linq;
+using TicTacToe.Achievements;
 
 namespace TicTacToe.UI
 {
@@ -28,11 +30,9 @@ namespace TicTacToe.UI
 
         [Header("Difficulty Selection (for Bot mode)")]
         [SerializeField]
-        [Tooltip("Panel containing difficulty selection (shown when hovering/selecting bot mode)")]
         private GameObject _difficultyPanel;
 
         [SerializeField]
-        [Tooltip("Slider for difficulty selection (0=Easy, 1=Medium, 2=Hard)")]
         private Slider _difficultySlider;
 
         [SerializeField]
@@ -41,15 +41,12 @@ namespace TicTacToe.UI
 
         [Header("Difficulty Colors")]
         [SerializeField]
-        [Tooltip("Color for Easy difficulty")]
         private Color _easyColor = Color.green;
 
         [SerializeField]
-        [Tooltip("Color for Medium difficulty")]
         private Color _mediumColor = Color.yellow;
 
         [SerializeField]
-        [Tooltip("Color for Hard difficulty")]
         private Color _hardColor = new Color(1f, 0.37f, 0.34f); // #FF5F57
 
         [SerializeField]
@@ -58,8 +55,17 @@ namespace TicTacToe.UI
 
 		[Header("Game Reference")]
         [SerializeField]
-        [Tooltip("Reference to the GamePresenter")]
         private GamePresenter _gamePresenter;
+
+        [Header("Achievements")]
+        [SerializeField]
+        private AchievementShowcase _achievementShowcase;
+
+        [SerializeField]
+        private Button _achievementsButton;
+        
+        [SerializeField]
+        private AchievementNotification _achievementNotification;
 
         #endregion
 
@@ -77,6 +83,56 @@ namespace TicTacToe.UI
             SetupSlider();
             ShowStartPage();
             SetDifficulty(AI.AIDifficulty.Easy); // Default to Easy
+        }
+        
+        private void Start()
+        {
+            Debug.Log("[StartPageController] Initializing achievement showcase...");
+            
+            // Initialize achievement showcase with the achievement manager from game presenter
+            if (_gamePresenter != null && _achievementShowcase != null)
+            {
+                // Ensure game presenter has initialized its achievement manager
+                if (_gamePresenter.AchievementManager == null)
+                {
+                    Debug.Log("[StartPageController] Initializing game presenter to create achievement manager");
+                    // Initialize a temporary game to ensure achievement manager exists
+                    _gamePresenter.InitializeWithSettings(Core.GameMode.PlayerVsPlayer, AI.AIDifficulty.Easy);
+                }
+                
+                if (_gamePresenter.AchievementManager != null)
+                {
+                    _achievementShowcase.Initialize(_gamePresenter.AchievementManager);
+                    Debug.Log("[StartPageController] Achievement showcase initialized successfully");
+                }
+                else
+                {
+                    Debug.LogError("[StartPageController] Failed to create achievement manager!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[StartPageController] Cannot initialize showcase: GamePresenter={_gamePresenter != null}, Showcase={_achievementShowcase != null}");
+            }
+        }
+        
+        /// <summary>
+        /// Resets all achievements for testing. Right-click this component in Inspector and select "Reset All Achievements".
+        /// </summary>
+        [ContextMenu("Reset All Achievements")]
+        private void ResetAchievements()
+        {
+            if (_gamePresenter?.AchievementManager != null)
+            {
+                _gamePresenter.AchievementManager.ResetAllAchievements();
+                Debug.Log("[StartPageController] All achievements have been reset!");
+                
+                // Refresh showcase if it's open
+                if (_achievementShowcase != null)
+                {
+                    _achievementShowcase.Hide();
+                }
+            }
         }
 
         private void OnDestroy()
@@ -98,6 +154,11 @@ namespace TicTacToe.UI
             if (_playVsFriendButton != null)
             {
                 _playVsFriendButton.onClick.AddListener(OnPlayVsFriendClicked);
+            }
+
+            if (_achievementsButton != null)
+            {
+                _achievementsButton.onClick.AddListener(OnAchievementsClicked);
             }
         }
 
@@ -123,6 +184,11 @@ namespace TicTacToe.UI
             if (_playVsFriendButton != null)
             {
                 _playVsFriendButton.onClick.RemoveListener(OnPlayVsFriendClicked);
+            }
+
+            if (_achievementsButton != null)
+            {
+                _achievementsButton.onClick.RemoveListener(OnAchievementsClicked);
             }
 
             if (_difficultySlider != null)
@@ -279,6 +345,52 @@ namespace TicTacToe.UI
             {
                 _difficultyPanel.SetActive(true); // Show difficulty selection
             }
+            
+            // Show any pending achievement notifications
+            ShowPendingAchievementNotifications();
+        }
+        
+        private void ShowPendingAchievementNotifications()
+        {
+            Debug.Log("[StartPageController] Checking for pending achievement notifications...");
+            
+            if (_gamePresenter == null || _achievementNotification == null)
+            {
+                Debug.LogWarning($"[StartPageController] Missing references: GamePresenter={_gamePresenter != null}, Notification={_achievementNotification != null}");
+                return;
+            }
+            
+            var achievementManager = _gamePresenter.AchievementManager;
+            if (achievementManager == null)
+            {
+                Debug.LogWarning("[StartPageController] Achievement manager is null");
+                return;
+            }
+            
+            if (!achievementManager.HasPendingNotifications())
+            {
+                Debug.Log("[StartPageController] No pending notifications");
+                return;
+            }
+            
+            // Start coroutine to show all pending notifications sequentially
+            StartCoroutine(ShowPendingNotificationsSequentially(achievementManager));
+        }
+        
+        private System.Collections.IEnumerator ShowPendingNotificationsSequentially(AchievementManager achievementManager)
+        {
+            while (achievementManager.HasPendingNotifications())
+            {
+                var achievement = achievementManager.GetNextPendingNotification();
+                if (achievement != null)
+                {
+                    Debug.Log($"[StartPageController] Showing pending notification: {achievement.Title}");
+                    _achievementNotification.ShowAchievement(achievement);
+                    
+                    // Wait for notification to complete (0.5s slide in + 3s display + 0.3s slide out = 3.8s)
+                    yield return new WaitForSeconds(4.0f);
+                }
+            }
         }
 
         private void ShowGamePage()
@@ -312,6 +424,29 @@ namespace TicTacToe.UI
 
             // Return to start page
             ShowStartPage();
+        }
+
+        /// <summary>
+        /// Opens the achievements showcase.
+        /// </summary>
+        private void OnAchievementsClicked()
+        {
+            Debug.Log("[StartPageController] Achievements button clicked");
+            
+            // Ensure achievement showcase is initialized
+            if (_achievementShowcase == null)
+            {
+                Debug.LogError("[StartPageController] Achievement showcase reference is null!");
+                return;
+            }
+            
+            // Try to initialize if not already done
+            if (_gamePresenter != null && _gamePresenter.AchievementManager != null)
+            {
+                _achievementShowcase.Initialize(_gamePresenter.AchievementManager);
+            }
+            
+            _achievementShowcase.Show();
         }
 
         /// <summary>

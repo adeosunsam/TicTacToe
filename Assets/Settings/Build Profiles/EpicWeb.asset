@@ -1008,6 +1008,7 @@ MonoBehaviour:
     - line: '|   XboxOneOverrideIdentityPublisher: '
     - line: '|   vrEditorSettings: {}'
     - line: '|   cloudServicesEnabled:'
+    - line: '|     Purchasing: 0'
     - line: '|     UNet: 1'
     - line: '|   luminIcon:'
     - line: '|     m_Name: '

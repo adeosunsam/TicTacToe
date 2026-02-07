@@ -136,6 +136,14 @@ namespace TicTacToe.Game
             return _gameMode == GameMode.PlayerVsBot && GetCurrentPlayer() == _aiPlayerID;
         }
 
+        /// <summary>
+        /// Gets the current game board.
+        /// </summary>
+        public IGameBoard GetBoard()
+        {
+            return _board;
+        }
+
         #endregion
 
         #region Protected Methods

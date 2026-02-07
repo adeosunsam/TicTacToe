@@ -4,6 +4,7 @@ using UnityEngine;
 using TicTacToe.Game;
 using TicTacToe.Core;
 using TicTacToe.AI;
+using TicTacToe.Achievements;
 
 namespace TicTacToe.UI
 {
@@ -37,13 +38,20 @@ namespace TicTacToe.UI
         [SerializeField]
         private AIDifficulty aiDifficulty = AIDifficulty.Hard;
 
+        [Header("Achievements")]
+        [SerializeField]
+        private AchievementNotification achievementNotification;
+
         private const int PLAYER_X = 1;
         private const int PLAYER_O = 2;
 
         private AIGameController gameController;
+        private AchievementManager achievementManager;
         private Coroutine resetCoroutine;
         private Coroutine aiMoveCoroutine;
         private bool isInitialized;
+        
+        public AchievementManager AchievementManager => achievementManager;
 
         private void OnDestroy()
         {
@@ -79,11 +87,21 @@ namespace TicTacToe.UI
                 PLAYER_X,
                 PLAYER_O);
 
+            // Initialize achievement manager if not already done
+            if (achievementManager == null)
+            {
+                achievementManager = new AchievementManager();
+                achievementManager.OnAchievementUnlocked += HandleAchievementUnlocked;
+            }
+
             SubscribeToGameEvents();
             gameView.Initialize(OnCellClicked);
             
             UpdateStatusForCurrentPlayer();
             UpdateScores();
+            
+            // Notify achievement manager of game start
+            achievementManager.OnGameStarted(gameMode);
         }
 
         private void SubscribeToGameEvents()
@@ -117,10 +135,19 @@ namespace TicTacToe.UI
             gameController?.TryPlayCell(cellIndex);
         }
 
+        private void HandleAchievementUnlocked(Achievement achievement)
+        {
+            Debug.Log($"[GamePresenter] HandleAchievementUnlocked called: {achievement.Title} - Queued for display on start page");
+            // Don't show notification during gameplay - it will be shown when returning to start page
+        }
+
         private void HandleCellPlayed(int cellIndex, int player)
         {
             Sprite sprite = player == PLAYER_X ? xSprite : oSprite;
             gameView.UpdateCell(cellIndex, sprite);
+            
+            // Track cell played for achievement checking
+            achievementManager?.OnCellPlayed(gameController.GetBoard());
         }
 
         private void HandleWin(int player, int winLine)
@@ -152,12 +179,19 @@ namespace TicTacToe.UI
                 gameView.ShowStrikeLine(winLine);
             UpdateScores();
             
+            // Track win for achievements
+            achievementManager?.OnPlayerWin(player, gameMode, aiDifficulty, gameController.GetBoard());
+            
             resetCoroutine = StartCoroutine(ResetAfterDelay());
         }
 
         private void HandleDraw()
         {
             gameView.UpdateStatusText("It's a Draw!");
+            
+            // Track draw for achievement system
+            achievementManager?.OnDraw();
+            
             resetCoroutine = StartCoroutine(ResetAfterDelay());
         }
 
