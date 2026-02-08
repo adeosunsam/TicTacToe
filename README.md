@@ -91,12 +91,6 @@ The game uses clean architecture patterns:
 - **Perfect Victory**: Play defensively and block your opponent early
 - **Friendly Rivalry**: Great for unlocking while practicing with a friend
 
-## 👨‍💻 Developer
-
-**Samuel Adeosun**  
-Development Time: 1 Week  
-Engine: Unity 6 (6000.0.29f1)
-
 ## 📄 License
 
 See [LICENSE](LICENSE) file for details.
