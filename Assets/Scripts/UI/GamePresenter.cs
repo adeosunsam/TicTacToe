@@ -4,6 +4,7 @@ using TicTacToe.Achievements;
 using TicTacToe.AI;
 using TicTacToe.Core;
 using TicTacToe.Game;
+using TMPro;
 using UnityEngine;
 
 namespace TicTacToe.UI
@@ -21,6 +22,9 @@ namespace TicTacToe.UI
 
 		[SerializeField]
 		private Sprite oSprite;
+
+		[SerializeField]
+		private TextMeshProUGUI player1, player2, playerGameMode;
 
 		[Header("Settings")]
 		[SerializeField]
@@ -296,6 +300,20 @@ namespace TicTacToe.UI
 		{
 			UnsubscribeFromGameEvents();
 			gameMode = mode;
+
+			if (gameMode == GameMode.PlayerVsPlayer)
+			{
+				player1.text = "Player 1";
+				player2.text = "Player 2";
+				playerGameMode.text = string.Empty;
+			}
+			else if (gameMode == GameMode.PlayerVsBot)
+			{
+				player1.text = "you";
+				player2.text = "bot";
+				playerGameMode.text = difficulty.GetValueOrDefault().ToString();
+			}
+
 			aiDifficulty = difficulty ?? AIDifficulty.Easy;
 			InitializeGame();
 			isInitialized = true;
