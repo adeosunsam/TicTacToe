@@ -45,11 +45,9 @@ namespace TicTacToe.Achievements
             {
                 panelRect = notificationPanel.GetComponent<RectTransform>();
                 
-                // Set up positions (assuming notification slides from top)
                 visiblePosition = panelRect.anchoredPosition;
                 hiddenPosition = new Vector2(visiblePosition.x, visiblePosition.y + panelRect.rect.height + 100);
                 
-                // Start hidden
                 panelRect.anchoredPosition = hiddenPosition;
                 notificationPanel.SetActive(false);
             }
@@ -57,32 +55,22 @@ namespace TicTacToe.Achievements
 
         public void ShowAchievement(Achievement achievement)
         {
-            if (notificationPanel == null)
+            if (notificationPanel == null || achievement == null)
             {
-                Debug.LogError("[AchievementNotification] Notification panel is null!");
                 return;
             }
-            
-            if (achievement == null)
-            {
-                Debug.LogError("[AchievementNotification] Achievement is null!");
-                return;
-            }
-
-            Debug.Log($"[AchievementNotification] Showing achievement: {achievement.Title}");
 
             if (displayCoroutine != null)
             {
                 StopCoroutine(displayCoroutine);
             }
 
-            // Ensure this GameObject is active before starting coroutine
+            //activate gameobject before starting coroutine
             if (!gameObject.activeInHierarchy)
             {
                 gameObject.SetActive(true);
             }
             
-            // Activate panel before starting coroutine
             notificationPanel.SetActive(true);
             displayCoroutine = StartCoroutine(DisplayNotification(achievement));
         }

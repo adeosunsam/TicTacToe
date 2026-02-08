@@ -4,10 +4,6 @@ using TMPro;
 
 namespace TicTacToe.UI
 {
-    /// <summary>
-    /// View component responsible for rendering game UI elements.
-    /// Implements IGameView interface for testability and decoupling.
-    /// </summary>
     [DisallowMultipleComponent]
     public class GameView : MonoBehaviour, IGameView
     {
@@ -25,8 +21,6 @@ namespace TicTacToe.UI
         [Header("Strike Lines")]
         [SerializeField]
         private StrikeLineController strikeLineController;
-
-        private const int EXPECTED_CELL_COUNT = 9;
 
         public void Initialize(Action<int> onCellClicked)
         {
@@ -52,7 +46,6 @@ namespace TicTacToe.UI
         {
             if (!IsValidCellIndex(cellIndex))
             {
-                Debug.LogWarning($"[GameView] Invalid cell index: {cellIndex}", this);
                 return;
             }
 
@@ -63,7 +56,6 @@ namespace TicTacToe.UI
         {
             if (!IsValidCellIndex(cellIndex))
             {
-                Debug.LogWarning($"[GameView] Invalid cell index: {cellIndex}", this);
                 return;
             }
 
@@ -85,10 +77,6 @@ namespace TicTacToe.UI
             if (strikeLineController != null)
             {
                 strikeLineController.ShowLine(winLine);
-            }
-            else
-            {
-                Debug.LogWarning("[GameView] StrikeLineController is not assigned!", this);
             }
         }
 

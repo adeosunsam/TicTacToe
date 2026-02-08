@@ -17,39 +17,21 @@ namespace TicTacToe.Achievements
         private bool opponentGotTwoInRow;
         
         // Pending notifications for achievements unlocked in the previous session
-        private Queue<Achievement> pendingNotifications = new Queue<Achievement>();
+        private Queue<Achievement> pendingNotifications = new();
 
         public event Action<Achievement> OnAchievementUnlocked;
 
-        public AchievementManager()
+        public AchievementManager(List<AchievementData> achievementDataList)
         {
-            achievements = new Dictionary<AchievementType, Achievement>
+            achievements = new Dictionary<AchievementType, Achievement>();
+            
+            foreach (var data in achievementDataList)
             {
-                { AchievementType.FirstVictory, new Achievement(
-                    AchievementType.FirstVictory, 
-                    "First Victory", 
-                    "Win your first game") },
-                    
-                { AchievementType.AIConqueror, new Achievement(
-                    AchievementType.AIConqueror, 
-                    "AI Conqueror", 
-                    "Defeat the Hard AI") },
-                    
-                { AchievementType.WinStreak3, new Achievement(
-                    AchievementType.WinStreak3, 
-                    "Hat Trick", 
-                    "Win 3 games in a row") },
-                    
-                { AchievementType.FriendlyRivalry, new Achievement(
-                    AchievementType.FriendlyRivalry, 
-                    "Friendly Rivalry", 
-                    "Play 10 games against a friend") },
-                    
-                { AchievementType.PerfectVictory, new Achievement(
-                    AchievementType.PerfectVictory, 
-                    "Perfect Victory", 
-                    "Win without opponent getting 2 in a row") }
-            };
+                if (data != null && !achievements.ContainsKey(data.Type))
+                {
+                    achievements[data.Type] = new Achievement(data);
+                }
+            }
 
             LoadAchievements();
             LoadStats();
@@ -58,7 +40,11 @@ namespace TicTacToe.Achievements
         public void OnGameStarted(GameMode gameMode)
         {
             opponentGotTwoInRow = false;
-            
+        }
+
+        public void OnRoundCompleted(GameMode gameMode)
+        {
+            // Track each completed round as a game for friend games
             if (gameMode == GameMode.PlayerVsPlayer)
             {
                 friendGamesPlayed++;
@@ -69,8 +55,6 @@ namespace TicTacToe.Achievements
 
         public void OnPlayerWin(int player, GameMode gameMode, AIDifficulty aiDifficulty, IGameBoard board)
         {
-            Debug.Log($"[AchievementManager] OnPlayerWin called: player={player}, gameMode={gameMode}");
-            
             // Only count player wins (player is always X in bot mode)
             bool isPlayerWin = gameMode == GameMode.PlayerVsBot ? player == 1 : true;
             
@@ -112,18 +96,24 @@ namespace TicTacToe.Achievements
             SaveStats();
         }
 
-        public void OnCellPlayed(IGameBoard board)
+        public void OnBoardReset()
         {
-            // Check if opponent has 2 in a row
-            if (!opponentGotTwoInRow)
+            // Reset the flag when starting a new round
+            opponentGotTwoInRow = false;
+        }
+
+        public void OnCellPlayed(IGameBoard board, int playerWhoMoved, int opponentPlayer)
+        {
+            // Check if opponent has 2 in a row (only check if the opponent just moved)
+            if (!opponentGotTwoInRow && playerWhoMoved == opponentPlayer)
             {
-                opponentGotTwoInRow = HasTwoInRow(board);
+                opponentGotTwoInRow = HasTwoInRow(board, opponentPlayer);
             }
         }
 
-        private bool HasTwoInRow(IGameBoard board)
+        private bool HasTwoInRow(IGameBoard board, int player)
         {
-            // Check rows, columns, and diagonals for 2 in a row
+            // Check rows, columns, and diagonals for 2 in a row for the specified player
             int[,] lines = {
                 // Rows
                 {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
@@ -143,14 +133,16 @@ namespace TicTacToe.Achievements
                 int cell2 = board.GetCell(pos2);
                 int cell3 = board.GetCell(pos3);
 
-                // Count non-empty cells of the same player
-                if (cell1 != 0 && (cell1 == cell2 || cell1 == cell3))
+                // Count cells belonging to the specified player
+                int count = 0;
+                if (cell1 == player) count++;
+                if (cell2 == player) count++;
+                if (cell3 == player) count++;
+                
+                // If this player has exactly 2 in this line, they have "2 in a row"
+                if (count >= 2)
                 {
-                    int count = (cell1 == cell2 ? 1 : 0) + (cell1 == cell3 ? 1 : 0) + 1;
-                    if (count >= 2)
-                    {
-                        return true;
-                    }
+                    return true;
                 }
             }
 
@@ -159,7 +151,6 @@ namespace TicTacToe.Achievements
 
         private void CheckFirstVictory()
         {
-            Debug.Log("[AchievementManager] Checking FirstVictory achievement");
             TryUnlockAchievement(AchievementType.FirstVictory);
         }
 
@@ -195,32 +186,22 @@ namespace TicTacToe.Achievements
             {
                 if (!achievement.IsUnlocked)
                 {
-                    Debug.Log($"[AchievementManager] Unlocking achievement: {type}");
                     achievement.Unlock();
                     SaveAchievement(type);
                     pendingNotifications.Enqueue(achievement);
-                    Debug.Log($"[AchievementManager] Pending notifications count: {pendingNotifications.Count}");
                     OnAchievementUnlocked?.Invoke(achievement);
-                }
-                else
-                {
-                    Debug.Log($"[AchievementManager] Achievement already unlocked: {type}");
                 }
             }
         }
         
         public bool HasPendingNotifications()
         {
-            bool hasPending = pendingNotifications.Count > 0;
-            Debug.Log($"[AchievementManager] HasPendingNotifications: {hasPending}, Count: {pendingNotifications.Count}");
-            return hasPending;
+            return pendingNotifications.Count > 0;
         }
         
         public Achievement GetNextPendingNotification()
         {
-            var achievement = pendingNotifications.Count > 0 ? pendingNotifications.Dequeue() : null;
-            Debug.Log($"[AchievementManager] GetNextPendingNotification: {achievement?.Title ?? "null"}, Remaining: {pendingNotifications.Count}");
-            return achievement;
+            return pendingNotifications.Count > 0 ? pendingNotifications.Dequeue() : null;
         }
         
         public void ClearPendingNotifications()
@@ -250,8 +231,6 @@ namespace TicTacToe.Achievements
 
         public void ResetAllAchievements()
         {
-            Debug.Log("[AchievementManager] Resetting all achievements...");
-            
             foreach (var achievement in achievements.Values)
             {
                 achievement.Lock();
@@ -263,8 +242,6 @@ namespace TicTacToe.Achievements
             opponentGotTwoInRow = false;
             pendingNotifications.Clear();
             SaveStats();
-            
-            Debug.Log("[AchievementManager] All achievements reset complete!");
         }
 
         private void SaveAchievement(AchievementType type)

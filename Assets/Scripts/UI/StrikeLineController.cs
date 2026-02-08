@@ -37,36 +37,9 @@ namespace TicTacToe.UI
         private const int VERTICAL_END = 5;
         private const int DIAGONAL_MAIN = 6;
         private const int DIAGONAL_ANTI = 7;
-        private const float DIAGONAL_LENGTH_MULTIPLIER = 1.414f; // sqrt(2)
+        private const float DIAGONAL_LENGTH_MULTIPLIER = 1.414f;
         private const float DIAGONAL_MAIN_ROTATION = 45f;
         private const float DIAGONAL_ANTI_ROTATION = -45f;
-
-        #region Unity Lifecycle
-
-#if UNITY_EDITOR
-        /// <summary>
-        /// Validates serialized fields in the Unity Editor.
-        /// </summary>
-        private void OnValidate()
-        {
-            if (cellSize <= 0)
-            {
-                cellSize = 180f;
-            }
-
-            if (boardSize <= 0)
-            {
-                boardSize = 540f;
-            }
-
-            if (lineThickness <= 0)
-            {
-                lineThickness = 20f;
-            }
-        }
-#endif
-
-        #endregion
 
         public void ShowLine(int winLine)
         {
@@ -78,10 +51,6 @@ namespace TicTacToe.UI
             {
                 lineToShow.SetActive(true);
                 PositionLine(lineToShow, winLine);
-            }
-            else
-            {
-                Debug.LogWarning($"[StrikeLineController] No line GameObject assigned for win pattern {winLine}", this);
             }
         }
 

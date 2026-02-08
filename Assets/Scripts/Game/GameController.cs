@@ -3,26 +3,12 @@ using TicTacToe.Core;
 
 namespace TicTacToe.Game
 {
-    /// <summary>
-    /// Core game controller that manages game flow and state.
-    /// Can be extended for AI gameplay support.
-    /// </summary>
     public class GameController
     {
-        #region Protected Fields
-
         protected readonly IGameBoard _board;
         protected readonly IWinChecker _winChecker;
         protected readonly IScoreManager _scoreManager;
         protected readonly GameState _gameState;
-
-        #endregion
-
-        #region Events
-
-        #endregion
-
-        #region Events
 
         public event Action<int, int> OnCellPlayed; // cellIndex, player
         public event Action<int, int> OnWin; // player, winLine
@@ -30,21 +16,13 @@ namespace TicTacToe.Game
         public event Action<int> OnPlayerChanged; // currentPlayer
         public event Action OnBoardReset;
 
-        #endregion
-
-        #region Constructor
-
         public GameController(IGameBoard board, IWinChecker winChecker, IScoreManager scoreManager, GameState gameState)
         {
-            _board = board ?? throw new ArgumentNullException(nameof(board));
-            _winChecker = winChecker ?? throw new ArgumentNullException(nameof(winChecker));
-            _scoreManager = scoreManager ?? throw new ArgumentNullException(nameof(scoreManager));
-            _gameState = gameState ?? throw new ArgumentNullException(nameof(gameState));
+            _board = board;
+            _winChecker = winChecker;
+            _scoreManager = scoreManager;
+            _gameState = gameState;
         }
-
-        #endregion
-
-        #region Public Methods
 
         public virtual bool TryPlayCell(int cellIndex)
         {
@@ -100,10 +78,6 @@ namespace TicTacToe.Game
             return _board;
         }
 
-        #endregion
-
-        #region Protected Methods
-
         protected void HandleWin(int player, int winLine)
         {
             _gameState.SetWin();
@@ -116,7 +90,5 @@ namespace TicTacToe.Game
             _gameState.SetDraw();
             OnDraw?.Invoke();
         }
-
-        #endregion
     }
 }

@@ -3,14 +3,8 @@ using TicTacToe.Core;
 
 namespace TicTacToe.AI
 {
-    /// <summary>
-    /// Minimax AI implementation for Tic Tac Toe.
-    /// Provides optimal move calculation with configurable difficulty.
-    /// </summary>
     public class MinimaxAI : IAIPlayer
     {
-        #region Constants
-
         private const int WIN_SCORE = 10;
         private const int LOSE_SCORE = -10;
         private const int DRAW_SCORE = 0;
@@ -18,28 +12,14 @@ namespace TicTacToe.AI
         // Strategic position weights for tie-breaking
         private static readonly int[] POSITION_WEIGHTS = new int[]
         {
-            3, 2, 3,  // Corners are valuable
-            2, 4, 2,  // Center is most valuable
-            3, 2, 3   // Corners are valuable
+            3, 2, 3,// Corners are valuable
+            2, 4, 2,// Center is most valuable
+            3, 2, 3// Corners are valuable
         };
-
-        #endregion
-
-        #region Private Fields
 
         private readonly IWinChecker _winChecker;
         private readonly Random _random;
         private readonly AIDifficulty _difficulty;
-
-        #endregion
-
-        #region Constructor
-
-        /// <summary>
-        /// Initializes a new instance of MinimaxAI.
-        /// </summary>
-        /// <param name="winChecker">Win condition checker</param>
-        /// <param name="difficulty">AI difficulty level</param>
         public MinimaxAI(IWinChecker winChecker, AIDifficulty difficulty = AIDifficulty.Hard)
         {
             _winChecker = winChecker;
@@ -47,13 +27,6 @@ namespace TicTacToe.AI
             _random = new Random();
         }
 
-        #endregion
-
-        #region IAIPlayer Implementation
-
-        /// <summary>
-        /// Calculates the best move using minimax algorithm with alpha-beta pruning.
-        /// </summary>
         public int CalculateMove(IGameBoard board, int aiPlayer, int humanPlayer)
         {
             if (board == null) return -1;
@@ -101,7 +74,6 @@ namespace TicTacToe.AI
                     // Undo move
                     board.SetCell(i, 0);
 
-                    // Update best move(s)
                     if (score > bestScore)
                     {
                         bestScore = score;
@@ -111,13 +83,11 @@ namespace TicTacToe.AI
                     }
                     else if (score == bestScore)
                     {
-                        // Collect all equally good moves for tie-breaking
                         bestMoves.Add(i);
                     }
                 }
             }
 
-            // Tie-breaking: choose move with best strategic position
             if (bestMoves.Count > 1)
             {
                 bestMove = GetBestStrategicMove(bestMoves);
@@ -126,24 +96,16 @@ namespace TicTacToe.AI
             return bestMove;
         }
 
-        #endregion
-
-        #region Minimax Algorithm
-
-        /// <summary>
-        /// Minimax algorithm with alpha-beta pruning.
-        /// </summary>
         private int Minimax(IGameBoard board, int depth, bool isMaximizing, int aiPlayer, int humanPlayer, int alpha, int beta)
         {
-            // Check terminal states
             if (_winChecker.CheckWin(board, aiPlayer, out _))
             {
-                return WIN_SCORE - depth; // Prefer faster wins
+                return WIN_SCORE - depth;// Prefer faster wins
             }
 
             if (_winChecker.CheckWin(board, humanPlayer, out _))
             {
-                return LOSE_SCORE + depth; // Delay losses
+                return LOSE_SCORE + depth;// Delay losses
             }
 
             if (_winChecker.CheckDraw(board))
@@ -168,7 +130,7 @@ namespace TicTacToe.AI
 
                         if (beta <= alpha)
                         {
-                            break; // Beta cutoff
+                            break;
                         }
                     }
                 }
@@ -192,7 +154,7 @@ namespace TicTacToe.AI
 
                         if (beta <= alpha)
                         {
-                            break; // Alpha cutoff
+                            break;
                         }
                     }
                 }
@@ -201,29 +163,19 @@ namespace TicTacToe.AI
             }
         }
 
-        #endregion
-
-        #region Difficulty Management
-
-        /// <summary>
-        /// Determines if AI should make a random move based on difficulty.
-        /// </summary>
         private bool ShouldMakeRandomMove()
         {
             double randomChance = _difficulty switch
             {
-                AIDifficulty.Easy => 0.6,      // 60% random moves
-                AIDifficulty.Medium => 0.3,    // 30% random moves
-                AIDifficulty.Hard => 0.1,      // 10% random moves
+                AIDifficulty.Easy => 0.6,// 60% random moves
+                AIDifficulty.Medium => 0.3,// 30% random moves
+                AIDifficulty.Hard => 0.1, // 10% random moves
                 _ => 0.0
             };
 
             return _random.NextDouble() < randomChance;
         }
 
-        /// <summary>
-        /// Gets a random valid move.
-        /// </summary>
         private int GetRandomMove(IGameBoard board)
         {
             var availableMoves = new System.Collections.Generic.List<int>();
@@ -242,9 +194,6 @@ namespace TicTacToe.AI
             return availableMoves[randomIndex];
         }
 
-        /// <summary>
-        /// Checks if this is the first move of the game (board is empty).
-        /// </summary>
         private bool IsFirstMove(IGameBoard board)
         {
             for (int i = 0; i < 9; i++)
@@ -257,10 +206,6 @@ namespace TicTacToe.AI
             return true;
         }
 
-        /// <summary>
-        /// Selects the best strategic position from equally scored moves.
-        /// Prefers center, then corners, then edges.
-        /// </summary>
         private int GetBestStrategicMove(System.Collections.Generic.List<int> moves)
         {
             int bestMove = moves[0];
@@ -277,28 +222,12 @@ namespace TicTacToe.AI
 
             return bestMove;
         }
-
-        #endregion
     }
 
-    /// <summary>
-    /// AI difficulty levels.
-    /// </summary>
     public enum AIDifficulty
     {
-        /// <summary>
-        /// Easy difficulty - Makes random moves 60% of the time (beginner friendly)
-        /// </summary>
         Easy,
-
-        /// <summary>
-        /// Medium difficulty - Makes random moves 30% of the time (balanced challenge)
-        /// </summary>
         Medium,
-
-        /// <summary>
-        /// Hard difficulty - Makes random moves 10% of the time (challenging but beatable)
-        /// </summary>
         Hard
     }
 }
